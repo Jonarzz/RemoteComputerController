@@ -20,27 +20,24 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content" >
 
-            <Button
+            <Button android:text="Left click"
                 android:id="@+id/left_button"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Left click" />
+                android:layout_weight="1" />
 
-            <Button
+            <Button android:text="Right click" 
                 android:id="@+id/right_button"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Right click" />
+                android:layout_weight="1" />
         </LinearLayout>
 
-        <Button
+        <Button android:text="Keyboard"
             android:id="@+id/keyboard_button"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Keyboard" />
+            android:layout_height="0dp"
+            android:layout_weight="1" />
     </LinearLayout>
 
 </RelativeLayout>
