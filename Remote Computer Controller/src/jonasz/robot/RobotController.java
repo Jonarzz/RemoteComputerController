@@ -24,6 +24,13 @@ public class RobotController {
 		robot.mouseMove(currentXMousePosition + distanceVector.x, currentYMousePosition + distanceVector.y);
 	}
 	
+	public void scrollWithGivenDistance(int distance) {
+		if (distance > 0)
+			robot.mouseWheel(distance/10 + 1);
+		else
+			robot.mouseWheel(distance/10 - 1);
+	}
+	
 	public void clickLeftMouseButton() {
 		robot.mousePress(LEFT_MOUSE_BUTTON);
 	}

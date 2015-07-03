@@ -7,37 +7,51 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.remotecompiutercontrollerclient.MainActivity" >
+    
+    <View
+        android:id="@+id/scroll_bar"
+        android:layout_width="20dp"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
     <LinearLayout
+        android:id="@+id/linear_layout"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:layout_toLeftOf="@+id/scroll_bar" 
+        android:layout_toStartOf="@+id/scroll_bar" >
 
         <LinearLayout
             android:id="@+id/horizontal_layout"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content" >
 
-            <Button android:text="Left click"
+            <Button
                 android:id="@+id/left_button"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:text="Left click" />
 
-            <Button android:text="Right click" 
+            <Button
                 android:id="@+id/right_button"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:text="Right click" />
         </LinearLayout>
 
-        <Button android:text="Keyboard"
+        <Button
             android:id="@+id/keyboard_button"
             android:layout_width="fill_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:text="Keyboard" />
     </LinearLayout>
-
+   
 </RelativeLayout>

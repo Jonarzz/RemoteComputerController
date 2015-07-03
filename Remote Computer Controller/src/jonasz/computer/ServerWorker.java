@@ -41,18 +41,20 @@ public class ServerWorker implements Runnable {
 			try {				
 				messageFromDevice = dis.readUTF();
 				
-				if (messageFromDevice.equals("leftClicked"))
+				if ("leftClicked".equals(messageFromDevice))
 					rc.clickLeftMouseButton();
-				else if (messageFromDevice.equals("rightClicked"))
+				else if ("rightClicked".equals(messageFromDevice))
 					rc.clickRightMouseButton();
-				else if (messageFromDevice.equals("leftReleased"))
+				else if ("leftReleased".equals(messageFromDevice))
 					rc.releaseLeftMouseButton();
-				else if (messageFromDevice.equals("rightReleased"))
+				else if ("rightReleased".equals(messageFromDevice))
 					rc.releaseRightMouseButton();
-				else {
-					getDistanceVectorFromInput(messageFromDevice, distanceVector);
+				else if (messageFromDevice.charAt(0) == 'M') {
+					getDistanceVectorFromInput(messageFromDevice.substring(1), distanceVector);
 					rc.mouseMoveWithGivenDistance(distanceVector);
 				}
+				else if (messageFromDevice.charAt(0) == 'S')
+					rc.scrollWithGivenDistance(Integer.parseInt(messageFromDevice.substring(1)));
 				
 			} catch (IOException e) {
 				break;

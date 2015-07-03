@@ -28,12 +28,12 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
 
-// TODO scroll bar
 // TODO klawiatura
 // TODO (klawisze dodatkowe: print screen, wycisz, g³oœniej, ciszej)
 public class MainActivity extends ActionBarActivity {
@@ -60,6 +60,8 @@ public class MainActivity extends ActionBarActivity {
 	
 	private Button leftButton;
 	private Button rightButton;
+	
+	private View scrollBar;
 
 	private boolean leftClickBlocked;
 	
@@ -81,6 +83,8 @@ public class MainActivity extends ActionBarActivity {
 		
 		leftButton = (Button)findViewById(R.id.left_button);
 		rightButton = (Button)findViewById(R.id.right_button);
+		//keyboardButton
+		scrollBar = findViewById(R.id.scroll_bar);
 
 		getIPAndStartTheApp();
 		createLongPressedHandler();
@@ -144,8 +148,11 @@ public class MainActivity extends ActionBarActivity {
 	private void successfullyStartApp() {
 		createSocketAndOutputStream();	
 		
-		leftButton.setOnTouchListener(new AddButtonTouchListener(leftButton));
-		rightButton.setOnTouchListener(new AddButtonTouchListener(rightButton));
+		leftButton.setOnTouchListener(new ButtonTouchListener(leftButton));
+		rightButton.setOnTouchListener(new ButtonTouchListener(rightButton));
+		//keyboardButton
+		scrollBar.setOnTouchListener(new ScrollBarListener());
+		scrollBar.setBackgroundColor(Color.rgb(60, 60, 60));
 	}
 	
 	private void createSocketAndOutputStream() { 
@@ -227,7 +234,7 @@ public class MainActivity extends ActionBarActivity {
 					x2 = (int)event.getX();
 					y2 = (int)event.getY(); 
 					
-					coordinatesDifference = Integer.toString(x2 - x1) + "," + Integer.toString(y2 - y1);
+					coordinatesDifference = "M" + Integer.toString(x2 - x1) + "," + Integer.toString(y2 - y1); // M is for mouse
 
 					if (Math.abs(x2 - x1) > ACCIDENTAL_SWIPE_LENGTH && Math.abs(y2 - y1) > ACCIDENTAL_SWIPE_LENGTH) {
 						numberOfMouseAreaClicks = 0;
@@ -259,11 +266,11 @@ public class MainActivity extends ActionBarActivity {
 		return super.onTouchEvent(event);
 	}
 	
-	private class AddButtonTouchListener implements OnTouchListener {
+	private class ButtonTouchListener implements OnTouchListener {
 		
 		private Button button;
 		
-		public AddButtonTouchListener(Button button) {
+		public ButtonTouchListener(Button button) {
 			this.button = button;
 		}
 		
@@ -301,6 +308,37 @@ public class MainActivity extends ActionBarActivity {
 			v.performClick();
 			
 			return false;
+		}
+	}
+	
+	private class ScrollBarListener implements OnTouchListener {
+
+		public boolean onTouch(View v, MotionEvent event) {
+			switch(event.getAction()) {
+            	case MotionEvent.ACTION_DOWN:
+					y1 = (int)event.getY();
+					
+					break;
+					
+            	case MotionEvent.ACTION_MOVE:
+					y2 = (int)event.getY(); 
+					
+					coordinatesDifference = "S" + Integer.toString(y2 - y1); // S is for scroll
+
+					y1 = y2;
+					
+					try {
+						dos.writeUTF(coordinatesDifference);
+					} catch (IOException e) {
+						logger.warn("IOException - Couldn't send coordinates to server.");
+					}
+					
+					break;
+			}
+			
+			v.performClick();
+			
+			return true;
 		}
 	}
 	
