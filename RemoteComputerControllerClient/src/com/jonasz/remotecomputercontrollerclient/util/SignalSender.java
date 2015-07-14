@@ -46,4 +46,12 @@ public class SignalSender {
 			logger.warn("IOException - Couldn't send right release signal to server.");
 		}
 	}
+	
+	public void sendString(String str) {
+		try {
+			dos.writeUTF(str);
+		} catch (IOException e) {
+			logger.warn("IOException - Couldn't send right release signal to server.");
+		}
+	}
 }

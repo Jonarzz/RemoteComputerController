@@ -10,14 +10,15 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import com.jonasz.remotecomputercontrollerclient.util.SignalSender;
-import com.jonasz.remotecomputercontrollerclient.util.Utilities;
+import com.jonasz.remotecomputercontrollerclient.util.ClientUtilities;
 
 import de.mindpipe.android.logging.log4j.LogConfigurator;
 import android.support.v7.app.ActionBarActivity;
 import android.text.InputType;
-import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -34,7 +35,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
 
-// TODO klawiatura
 // TODO (klawisze dodatkowe: print screen, wycisz, g³oœniej, ciszej)
 public class MainActivity extends ActionBarActivity {
 	
@@ -45,6 +45,9 @@ public class MainActivity extends ActionBarActivity {
 	private final int PRESS_LENGTH_TO_BLOCK_LEFT_CLICK = 500;
 	private final int SINGLE_CLICK_DELAY = 200;
 	private final int ACCIDENTAL_SWIPE_LENGTH = 8;
+	
+	private EditText input;
+	private InputMethodManager imm;
 	
 	private LogConfigurator logConfigurator;
 	private Logger logger;
@@ -60,6 +63,7 @@ public class MainActivity extends ActionBarActivity {
 	
 	private Button leftButton;
 	private Button rightButton;
+	private Button keyboardButton;
 	
 	private View scrollBar;
 
@@ -79,11 +83,14 @@ public class MainActivity extends ActionBarActivity {
 		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 		StrictMode.setThreadPolicy(policy); 
 		
+		input = new EditText(this);
+		imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+
 		configureLogger();
 		
 		leftButton = (Button)findViewById(R.id.left_button);
 		rightButton = (Button)findViewById(R.id.right_button);
-		//keyboardButton
+		keyboardButton = (Button)findViewById(R.id.keyboard_button);
 		scrollBar = findViewById(R.id.scroll_bar);
 
 		getIPAndStartTheApp();
@@ -95,10 +102,6 @@ public class MainActivity extends ActionBarActivity {
         logConfigurator.setFileName(Environment.getExternalStorageDirectory()
                         + File.separator + "com.jonasz.remotecomputercontrollerclient" + File.separator + "logs"
                         + File.separator + "log4j.txt");
-        String str = Environment.getExternalStorageDirectory()
-                + File.separator + "com.jonasz.remotecomputercontrollerclient" + File.separator + "logs"
-                + File.separator + "log4j.txt";
-        Log.i("A", str);
         logConfigurator.setRootLevel(Level.DEBUG);
         logConfigurator.setLevel("org.apache", Level.ERROR);
         logConfigurator.setFilePattern("%d %-5p [%c{2}]-[%L] %m%n");
@@ -110,11 +113,9 @@ public class MainActivity extends ActionBarActivity {
 	}
 	
 	private void getIPAndStartTheApp() {		
-		final EditText input = new EditText(this);
 		input.setHint("IP address (from the desktop app)");
 		input.setInputType(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 		
-		final InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 		imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
 		imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
 		
@@ -134,7 +135,7 @@ public class MainActivity extends ActionBarActivity {
 			public void onDismiss(DialogInterface dialog) {		
 				imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
 
-				if (!Utilities.isIPAddressValid(IPAddress))
+				if (!ClientUtilities.isIPAddressValid(IPAddress))
 					Toast.makeText(getApplicationContext(), "Invalid IP address.", Toast.LENGTH_LONG).show();
 				else
 					successfullyStartApp();
@@ -150,7 +151,7 @@ public class MainActivity extends ActionBarActivity {
 		
 		leftButton.setOnTouchListener(new ButtonTouchListener(leftButton));
 		rightButton.setOnTouchListener(new ButtonTouchListener(rightButton));
-		//keyboardButton
+		keyboardButton.setOnClickListener(new ButtonClickListener());
 		scrollBar.setOnTouchListener(new ScrollBarListener());
 		scrollBar.setBackgroundColor(Color.rgb(60, 60, 60));
 	}
@@ -211,57 +212,55 @@ public class MainActivity extends ActionBarActivity {
 	}
 	
 	public boolean onTouchEvent(MotionEvent event) {
-		if (wereSocketAndStreamCreated())
-			switch(event.getAction()) {
-				case MotionEvent.ACTION_DOWN:		
-					numberOfMouseAreaClicks++;
-					
-					if (numberOfMouseAreaClicks == 1)
-						handler.postDelayed(singleClick, SINGLE_CLICK_DELAY);
-					
-					x1 = (int)event.getX();
-					y1 = (int)event.getY();
-					
-					xOnActionDown = x1;
-					yOnActionDown = y1;
-					
-					break;
-
-				case MotionEvent.ACTION_MOVE:					
-					if (!leftClickBlocked)
-						sender.leftButtonReleased();
-
-					x2 = (int)event.getX();
-					y2 = (int)event.getY(); 
-					
-					coordinatesDifference = "M" + Integer.toString(x2 - x1) + "," + Integer.toString(y2 - y1); // M is for mouse
-
-					if (Math.abs(x2 - x1) > ACCIDENTAL_SWIPE_LENGTH && Math.abs(y2 - y1) > ACCIDENTAL_SWIPE_LENGTH) {
-						numberOfMouseAreaClicks = 0;
-						numberOfMouseAreaReleases = 0;
-						handler.removeCallbacks(singleClick); 
-					}
-					
-					x1 = x2;
-					y1 = y2;
-					
-					try {
-						dos.writeUTF(coordinatesDifference);
-					} catch (IOException e) {
-						logger.warn("IOException - Couldn't send coordinates to server.");
-					}
-					
-					break;
-					
-				case MotionEvent.ACTION_UP:					
-					x2 = (int)event.getX();
-					y2 = (int)event.getY(); 
+		if (!wereSocketAndStreamCreated())
+			return super.onTouchEvent(event);
+		
+		switch(event.getAction()) {
+			case MotionEvent.ACTION_DOWN:		
+				numberOfMouseAreaClicks++;
 				
-					if (Math.abs(x2 - xOnActionDown) < ACCIDENTAL_SWIPE_LENGTH && Math.abs(y2 - yOnActionDown) < ACCIDENTAL_SWIPE_LENGTH)
-						numberOfMouseAreaReleases++;
-					
-					break;
-			}
+				if (numberOfMouseAreaClicks == 1)
+					handler.postDelayed(singleClick, SINGLE_CLICK_DELAY);
+				
+				x1 = (int)event.getX();
+				y1 = (int)event.getY();
+				
+				xOnActionDown = x1;
+				yOnActionDown = y1;
+				
+				break;
+
+			case MotionEvent.ACTION_MOVE:					
+				if (!leftClickBlocked)
+					sender.leftButtonReleased();
+
+				x2 = (int)event.getX();
+				y2 = (int)event.getY(); 
+				
+				coordinatesDifference = "M" + Integer.toString(x2 - x1) + "," + Integer.toString(y2 - y1); // M is for mouse
+
+				if (Math.abs(x2 - x1) > ACCIDENTAL_SWIPE_LENGTH && Math.abs(y2 - y1) > ACCIDENTAL_SWIPE_LENGTH) {
+					numberOfMouseAreaClicks = 0;
+					numberOfMouseAreaReleases = 0;
+					handler.removeCallbacks(singleClick); 
+				}
+				
+				x1 = x2;
+				y1 = y2;
+
+				sender.sendString(coordinatesDifference);
+				
+				break;
+				
+			case MotionEvent.ACTION_UP:					
+				x2 = (int)event.getX();
+				y2 = (int)event.getY(); 
+			
+				if (Math.abs(x2 - xOnActionDown) < ACCIDENTAL_SWIPE_LENGTH && Math.abs(y2 - yOnActionDown) < ACCIDENTAL_SWIPE_LENGTH)
+					numberOfMouseAreaReleases++;
+				
+				break;
+		}
 		
 		return super.onTouchEvent(event);
 	}
@@ -311,6 +310,42 @@ public class MainActivity extends ActionBarActivity {
 		}
 	}
 	
+	private class ButtonClickListener implements OnClickListener {
+
+		public void onClick(View v) {
+			imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+			imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+		}
+		
+	}
+	
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (!wereSocketAndStreamCreated())
+			return super.onKeyDown(keyCode, event);
+
+		if (keyCode == KeyEvent.KEYCODE_DEL) {
+			sender.sendString("<"); // < is for backspace
+			return true;
+		}
+		else if (keyCode == KeyEvent.KEYCODE_ENTER) {
+			sender.sendString(">"); // > is for new line
+			return true;
+		}
+
+		if (event.isShiftPressed()) {
+			if (keyCode == KeyEvent.KEYCODE_SLASH) { // no question mark keycode
+				sender.sendString("!?"); // sending signal to click Shift+'/'
+				return true;
+			}
+			
+			sender.sendString("!" + ClientUtilities.getKeyFromID(keyCode)); // ! is for key on keyboard (lowercase)
+		}
+		else
+			sender.sendString("." + ClientUtilities.getKeyFromID(keyCode)); // . is for key on keyboard (lowercase)
+		
+		return super.onKeyDown(keyCode, event);
+	}
+	
 	private class ScrollBarListener implements OnTouchListener {
 
 		public boolean onTouch(View v, MotionEvent event) {
@@ -326,13 +361,9 @@ public class MainActivity extends ActionBarActivity {
 					coordinatesDifference = "S" + Integer.toString(y2 - y1); // S is for scroll
 
 					y1 = y2;
-					
-					try {
-						dos.writeUTF(coordinatesDifference);
-					} catch (IOException e) {
-						logger.warn("IOException - Couldn't send coordinates to server.");
-					}
-					
+
+					sender.sendString(coordinatesDifference);
+
 					break;
 			}
 			

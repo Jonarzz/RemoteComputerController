@@ -3,6 +3,8 @@ package jonasz.robot;
 import java.awt.*;
 import java.awt.event.*;
 
+import util.ServerUtilities;
+
 public class RobotController {
 	
 	private static final int ROBOT_AUTO_DELAY = 10;
@@ -22,6 +24,46 @@ public class RobotController {
 		currentXMousePosition = MouseInfo.getPointerInfo().getLocation().x;
 		currentYMousePosition = MouseInfo.getPointerInfo().getLocation().y;
 		robot.mouseMove(currentXMousePosition + distanceVector.x, currentYMousePosition + distanceVector.y);
+	}
+	
+	public void clickLowerOnKeyboard(char key) {
+		int keyCode = ServerUtilities.getRobotKeycode(key);
+		
+		if (keyCode == ServerUtilities.EMPTY_CHAR)
+			return;
+		
+		robot.keyPress(keyCode);
+		robot.keyRelease(keyCode);
+	}
+	
+	public void clickUpperOnKeyboard(char key) {
+		int keyCode = ServerUtilities.getRobotKeycode(key);
+		
+		if (keyCode == ServerUtilities.EMPTY_CHAR)
+			return;
+		
+		robot.keyPress(KeyEvent.VK_SHIFT);
+		
+		if (keyCode == ServerUtilities.QUESTION_MARK) {
+			robot.keyPress(KeyEvent.VK_SLASH);
+			robot.keyRelease(KeyEvent.VK_SLASH);
+		}
+		else {
+			robot.keyPress(keyCode);
+			robot.keyRelease(keyCode);
+		}
+		
+		robot.keyRelease(KeyEvent.VK_SHIFT);
+	}
+	
+	public void clickBackspace() {
+		robot.keyPress(KeyEvent.VK_BACK_SPACE);
+		robot.keyRelease(KeyEvent.VK_BACK_SPACE);
+	}
+	
+	public void clickEnter() {
+		robot.keyPress(KeyEvent.VK_ENTER);
+		robot.keyRelease(KeyEvent.VK_ENTER);
 	}
 	
 	public void scrollWithGivenDistance(int distance) {

@@ -4,7 +4,6 @@ import java.awt.Point;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketException;
 
 import jonasz.robot.RobotController;
 
@@ -55,6 +54,14 @@ public class ServerWorker implements Runnable {
 				}
 				else if (messageFromDevice.charAt(0) == 'S')
 					rc.scrollWithGivenDistance(Integer.parseInt(messageFromDevice.substring(1)));
+				else if (messageFromDevice.charAt(0) == '.')
+					rc.clickLowerOnKeyboard(messageFromDevice.charAt(1));
+				else if (messageFromDevice.charAt(0) == '!')
+					rc.clickUpperOnKeyboard(messageFromDevice.charAt(1));
+				else if (messageFromDevice.charAt(0) == '<')
+					rc.clickBackspace();
+				else if (messageFromDevice.charAt(0) == '>')
+					rc.clickEnter();
 				
 			} catch (IOException e) {
 				break;
