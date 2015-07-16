@@ -15,6 +15,7 @@ import com.jonasz.remotecomputercontrollerclient.util.ClientUtilities;
 import de.mindpipe.android.logging.log4j.LogConfigurator;
 import android.support.v7.app.ActionBarActivity;
 import android.text.InputType;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,6 +24,7 @@ import android.view.View.OnTouchListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -35,7 +37,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
 
-// TODO (klawisze dodatkowe: print screen, wycisz, g³oœniej, ciszej)
 public class MainActivity extends ActionBarActivity {
 	
 	private final String CONNECTION_SUCCESFUL_MESSAGE = "Connected succesfuly!";
@@ -45,6 +46,8 @@ public class MainActivity extends ActionBarActivity {
 	private final int PRESS_LENGTH_TO_BLOCK_LEFT_CLICK = 500;
 	private final int SINGLE_CLICK_DELAY = 200;
 	private final int ACCIDENTAL_SWIPE_LENGTH = 8;
+	
+	private String logFileName;
 	
 	private EditText input;
 	private InputMethodManager imm;
@@ -74,7 +77,6 @@ public class MainActivity extends ActionBarActivity {
 	
 	private String coordinatesDifference;
 	
-	@SuppressLint("NewApi")
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
@@ -99,9 +101,10 @@ public class MainActivity extends ActionBarActivity {
 	
 	private void configureLogger() {
 		logConfigurator = new LogConfigurator();
-        logConfigurator.setFileName(Environment.getExternalStorageDirectory()
-                        + File.separator + "com.jonasz.remotecomputercontrollerclient" + File.separator + "logs"
-                        + File.separator + "log4j.txt");
+		logFileName = Environment.getExternalStorageDirectory()
+                + File.separator + "com.jonasz.remotecomputercontrollerclient" + File.separator + "logs"
+                + File.separator + "log4j.txt";
+        logConfigurator.setFileName(logFileName);
         logConfigurator.setRootLevel(Level.DEBUG);
         logConfigurator.setLevel("org.apache", Level.ERROR);
         logConfigurator.setFilePattern("%d %-5p [%c{2}]-[%L] %m%n");
@@ -169,7 +172,12 @@ public class MainActivity extends ActionBarActivity {
 			Toast.makeText(this, UNKNOWN_HOST_MESSAGE, Toast.LENGTH_LONG).show();
 		} catch (IOException e) {
 			logger.warn("IOException - Couldn't create socket/output stream.");
-			Toast.makeText(this, IOEXCEPTION_MESSAGE, Toast.LENGTH_LONG).show();
+			
+			Toast toast = Toast.makeText(this, IOEXCEPTION_MESSAGE, Toast.LENGTH_LONG);
+			TextView v = (TextView) toast.getView().findViewById(android.R.id.message);
+			if( v != null) 
+				v.setGravity(Gravity.CENTER);
+			toast.show();
 		}		
 	}
 
@@ -331,14 +339,14 @@ public class MainActivity extends ActionBarActivity {
 			sender.sendString(">"); // > is for new line
 			return true;
 		}
-
+		
 		if (event.isShiftPressed()) {
 			if (keyCode == KeyEvent.KEYCODE_SLASH) { // no question mark keycode
 				sender.sendString("!?"); // sending signal to click Shift+'/'
 				return true;
 			}
 			
-			sender.sendString("!" + ClientUtilities.getKeyFromID(keyCode)); // ! is for key on keyboard (lowercase)
+			sender.sendString("!" + ClientUtilities.getKeyFromID(keyCode)); // ! is for key on keyboard (uppercase)
 		}
 		else
 			sender.sendString("." + ClientUtilities.getKeyFromID(keyCode)); // . is for key on keyboard (lowercase)

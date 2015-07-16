@@ -12,14 +12,17 @@ public class ServerWorker implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream dis;
 	private RobotController rc;
+	private TrayManager tm;
 	
 	private String messageFromDevice;
+	private Point distanceVector;
 	
 	private boolean wasDataInputStreamCreated;
 	
-	public ServerWorker(Socket clientSocket, RobotController rc) {
+	public ServerWorker(Socket clientSocket, RobotController rc, TrayManager tm) {
 		this.clientSocket = clientSocket;
 		this.rc = rc;
+		this.tm = tm;
 			
 		createDataInputStream();
 	}
@@ -28,14 +31,13 @@ public class ServerWorker implements Runnable {
 		try {
 			dis = new DataInputStream(clientSocket.getInputStream());
 			wasDataInputStreamCreated = true;
+			tm.setImageOn();
 		} catch (IOException e) {
 			wasDataInputStreamCreated = false;
 		}
 	}
 
 	public void run() {
-		Point distanceVector = new Point();
-		
 		while (wasDataInputStreamCreated) {
 			try {				
 				messageFromDevice = dis.readUTF();
@@ -49,7 +51,7 @@ public class ServerWorker implements Runnable {
 				else if ("rightReleased".equals(messageFromDevice))
 					rc.releaseRightMouseButton();
 				else if (messageFromDevice.charAt(0) == 'M') {
-					getDistanceVectorFromInput(messageFromDevice.substring(1), distanceVector);
+					getDistanceVectorFromInput(messageFromDevice.substring(1));
 					rc.mouseMoveWithGivenDistance(distanceVector);
 				}
 				else if (messageFromDevice.charAt(0) == 'S')
@@ -69,7 +71,9 @@ public class ServerWorker implements Runnable {
 		}
 	}
 	
-	private void getDistanceVectorFromInput(String messageFromDevice, Point distanceVector) {
+	private void getDistanceVectorFromInput(String messageFromDevice) {
+		distanceVector = new Point();
+		
 		String temp = "";
 		int i = 0;
 		
@@ -86,5 +90,4 @@ public class ServerWorker implements Runnable {
 		
 		distanceVector.y = Integer.parseInt(temp);
 	}
-
 }

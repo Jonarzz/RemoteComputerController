@@ -13,25 +13,21 @@ public class Server {
 	
 	private ServerSocket socket;
 
-	public Server(int socketPort) throws IOException {
-		System.out.println(getIpAddress());
+	public Server(int socketPort, TrayManager tm) throws IOException {
+		tm.setTooltip("IP address: " + getIpAddress());
 		socket = new ServerSocket(socketPort);
 	}
 
-	private String getIpAddress() { 
-        try {
-            for (Enumeration en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface intf = (NetworkInterface) en.nextElement();
-                for (Enumeration enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = (InetAddress) enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
-                        String ipAddress=inetAddress.getHostAddress().toString();
-                        return ipAddress;
-                    }
+	private String getIpAddress() throws SocketException { 
+        for (Enumeration en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+            NetworkInterface intf = (NetworkInterface) en.nextElement();
+            for (Enumeration enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                InetAddress inetAddress = (InetAddress) enumIpAddr.nextElement();
+                if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                    String ipAddress=inetAddress.getHostAddress().toString();
+                    return ipAddress;
                 }
             }
-        } catch (SocketException ex) {
-            ex.printStackTrace();
         }
         
         return null; 
@@ -45,8 +41,7 @@ public class Server {
 		try {
 			socket.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
 		}
 	}
-	
 }
