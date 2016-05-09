@@ -8,3 +8,7 @@ Desktop application is just an icon in tray, showing IP address that should be t
 
 Android application is one big touchpad with 3 additional buttons and a scroll bar.
 ![android](http://i.imgur.com/4BshGcs.png)
+
+---
+##Treeware License
+Basically MIT License, but if you use the code (learning or project purposes), you have to plant at least one tree at some future time.
